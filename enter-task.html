@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        /* Container for the task manager UI */
+        #task-manager {
+            background: white;
+            padding: 25px;
+            border-radius: 20px;
+            border: 8px solid #FFD700;
+            width: 90%;
+            max-width: 700px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+
+        /* Task row layout */
+        .task-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+            align-items: center;
+        }
+
+        input, select {
+            padding: 10px;
+            border: 2px solid #FFF9E6;
+            border-radius: 10px;
+            font-family: inherit;
+            font-size: 14px;
+        }
+
+        .btn-delete {
+            padding: 4px;
+            background-color: transparent;
+            border: none;
+            outline: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: none;
+        }
+
+        .btn-delete:hover {
+            opacity: 0.7;
+        }
+
+        .btn-delete:active,
+        .btn-delete:focus {
+            outline: none;
+            box-shadow: none;
+        }
+
+        .btn-delete img {
+            width: 24px;
+            height: 24px;
+        }
+
+        .inp-emoji { width: 45px; text-align: center; }
+        .inp-name { flex-grow: 2; }
+        .inp-time { width: 70px; }
+        .sel-dep { flex-grow: 1; }
+
+        /* Adjusted button size for list view */
+        button#add-task-btn {
+            padding: 12px 30px;
+            font-size: 18px;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="task-manager">
+        <h2 style="text-align: center; color: #FF4500; margin-top: 0;">Task list</h2>
+        <div id="task-list"></div>
+        
+        <div style="text-align: center;">
+            <button id="add-task-btn">Add task</button>
+        </div>
+    </div>
+
+    <script>
+        const taskListContainer = document.getElementById('task-list');
+        const addTaskBtn = document.getElementById('add-task-btn');
+        
+        // Load tasks from localStorage or initialize with empty task
+        let tasks = JSON.parse(localStorage.getItem('chore-tasks')) || [{ id: Date.now(), emoji: '', name: '', time: '', dependency: '' }];
+        
+        // Save tasks to localStorage
+        function saveTasks() {
+            localStorage.setItem('chore-tasks', JSON.stringify(tasks));
+        }
+
+        // Helper: Generates the <option> list for any dropdown
+        function getDependencyOptions(currentTaskId, selectedId) {
+            let html = '<option value="">No dependency</option>';
+            tasks.forEach(t => {
+                if (t.id !== currentTaskId && t.name.trim() !== "") {
+                    const isSelected = String(t.id) === String(selectedId) ? 'selected' : '';
+                    html += `<option value="${t.id}" ${isSelected}>After: ${t.name}</option>`;
+                }
+            });
+            return html;
+        }
+
+        // Updates all dropdowns without rebuilding the whole list (prevents focus loss)
+        function updateAllDropdowns() {
+            const selects = document.querySelectorAll('.sel-dep');
+            tasks.forEach((task, index) => {
+                const select = selects[index];
+                if (select) {
+                    select.innerHTML = getDependencyOptions(task.id, task.dependency);
+                }
+            });
+        }
+
+        function renderTasks() {
+            taskListContainer.innerHTML = '';
+            tasks.forEach((task, index) => {
+                const row = document.createElement('div');
+                row.className = 'task-row';
+                
+                row.innerHTML = `
+                    <input type="text" class="inp-emoji" placeholder="Icon" value="${task.emoji}">
+                    <input type="text" class="inp-name" placeholder="Task name" value="${task.name}">
+                    <input type="number" class="inp-time" placeholder="Mins" value="${task.time}" min="0">
+                    <select class="sel-dep">
+                        ${getDependencyOptions(task.id, task.dependency)}
+                    </select>
+                    <button class="btn-delete" data-index="${index}"><img src="delete-icon.png" alt="Delete"></button>
+                `;
+
+                // Event Listeners
+                const inputs = row.querySelectorAll('input');
+                inputs[0].oninput = (e) => {
+                    tasks[index].emoji = e.target.value;
+                    saveTasks();
+                };
+                inputs[1].oninput = (e) => {
+                    tasks[index].name = e.target.value;
+                    updateAllDropdowns(); // Update labels in dropdowns as you type
+                    saveTasks();
+                };
+                inputs[2].oninput = (e) => {
+                    tasks[index].time = e.target.value;
+                    saveTasks();
+                };
+                
+                const select = row.querySelector('select');
+                select.onchange = (e) => {
+                    tasks[index].dependency = e.target.value;
+                    saveTasks();
+                };
+
+                const deleteBtn = row.querySelector('.btn-delete');
+                deleteBtn.onclick = () => {
+                    tasks.splice(index, 1);
+                    saveTasks();
+                    renderTasks();
+                };
+
+                taskListContainer.appendChild(row);
+            });
+
+            addTaskBtn.style.display = tasks.length >= 10 ? 'none' : 'inline-block';
+        }
+
+        addTaskBtn.addEventListener('click', () => {
+            if (tasks.length >= 10) {
+                return;
+            }
+            
+            // Validate the last task before adding a new one
+            if (tasks.length > 0) {
+                const lastTask = tasks[tasks.length - 1];
+                if (!lastTask.name.trim() || !lastTask.time || lastTask.time <= 0) {
+                    alert('Please fill in the task name and time (in minutes) before adding a new task.');
+                    return;
+                }
+            }
+            
+            tasks.push({ id: Date.now(), emoji: '', name: '', time: '', dependency: '' });
+            saveTasks();
+            renderTasks();
+        });
+
+        // Initial render
+        renderTasks();
+    </script>
+</body>
+</html>

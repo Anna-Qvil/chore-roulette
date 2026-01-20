@@ -2,44 +2,158 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>My App</title>
 
     <link rel="manifest" href="manifest.json">
-
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link rel="apple-touch-icon" href="icon-192.png">
 
+    <link rel="stylesheet" href="styles.css">
+
     <style>
-        body { font-family: -apple-system, sans-serif; display: flex; flex-direction: column; align-items: center; padding-top: 50px; }
-        textarea { width: 80%; height: 100px; margin-top: 20px; padding: 10px; border-radius: 8px; }
+        /* Overriding some styles from styles.css for the iframe wrapper */
+        body, html { 
+            margin: 0; 
+            padding: 0; 
+            height: 100%; 
+            width: 100%; 
+            overflow: hidden; 
+            justify-content: flex-start; /* Reset flex from styles.css */
+        }
+        
+        #content-frame {
+            border: none;
+            width: 100%;
+            height: 100%;
+            background-color: #FFF9E6; /* Match your CSS */
+        }
+
+        /* Burger Menu Icon - Using your Gold/Red theme */
+        .menu-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            background: #FFD700; /* Gold from your canvas border */
+            color: #FF4500; /* Red from your pointer */
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 30px;
+            box-shadow: 0 4px rgba(0,0,0,0.1);
+        }
+
+        /* Overlay Menu */
+        .menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 249, 230, 0.95); /* Soft yellow with transparency */
+            display: none; 
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .menu-overlay a {
+            color: #FF6B6B; /* Button color from styles.css */
+            text-decoration: none;
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin: 20px;
+            padding: 10px 30px;
+            border: 4px solid #FFD700;
+            border-radius: 50px;
+            background: white;
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: #FF4500;
+            font-size: 40px;
+            cursor: pointer;
+        }
+
+        #welcome-screen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            width: 100%;
+        }
+
+        .welcome-btn {
+            background: #22C55E; /* Big green button */
+            color: white;
+            font-size: 3rem;
+            font-weight: bold;
+            padding: 60px 80px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+            transition: background 0.3s ease;
+        }
+
+        .welcome-btn:hover {
+            background: #16A34A;
+        }
+
+        .welcome-btn:active {
+            transform: scale(0.98);
+        }
+
+        #content-frame.hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
 
-    <h1>Hello World!</h1>
-    <p>This is my iPad App.</p>
+    <div class="menu-btn" onclick="toggleMenu()">☰</div>
 
-    <textarea id="noteBox" placeholder="Type something here to save..."></textarea>
+    <div id="navMenu" class="menu-overlay">
+        <div class="close-btn" onclick="toggleMenu()">✕</div>
+        <a href="#" onclick="loadPage('roulette-wheel.html')">Spin the wheel</a>
+        <a href="#" onclick="loadPage('enter-task.html')">Edit tasks</a>
+    </div>
+
+    <div id="welcome-screen">
+        <button class="welcome-btn" onclick="startRoulette()">Godmorgon Frank</button>
+    </div>
+
+    <iframe id="content-frame" class="hidden" src="roulette-wheel.html"></iframe>
 
     <script>
-        // Register the Service Worker (required for PWA)
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./sw.js')
-                .then(() => console.log("Service Worker Registered"));
+        function startRoulette() {
+            document.getElementById('welcome-screen').style.display = 'none';
+            document.getElementById('content-frame').classList.remove('hidden');
         }
 
-        // Simple LocalStorage Logic
-        const noteBox = document.getElementById('noteBox');
-        
-        // Load saved text on startup
-        noteBox.value = localStorage.getItem('myNote') || "";
+        function toggleMenu() {
+            const menu = document.getElementById('navMenu');
+            menu.style.display = (menu.style.display === 'flex') ? 'none' : 'flex';
+        }
 
-        // Save text automatically as she types
-        noteBox.addEventListener('input', () => {
-            localStorage.setItem('myNote', noteBox.value);
-        });
+        function loadPage(url) {
+            document.getElementById('content-frame').src = url;
+            toggleMenu();
+        }
+
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./sw.js');
+        }
     </script>
 </body>
 </html>

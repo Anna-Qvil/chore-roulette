@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kids' Fun Wheel</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <div id="wheel-container">
+        <div id="pointer"></div>
+        <canvas id="canvas" width="500" height="500"></canvas>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'];
+        
+        // Load tasks from localStorage
+        let tasks = JSON.parse(localStorage.getItem('chore-tasks')) || [];
+        
+        // Get valid tasks (non-empty names)
+        const validTasks = tasks.filter(t => t.name && t.name.trim() !== '');
+        const labels = validTasks.length > 0 ? validTasks.map(t => t.emoji || t.name) : [''];
+        const names = validTasks.length > 0 ? validTasks.map(t => t.name) : [''];
+        
+        let startAngle = 0;
+        const arc = Math.PI / (labels.length / 2);
+        let spinTimeout = null;
+        let spinAngleStart = 0;
+        let spinTime = 0;
+        let spinTimeTotal = 0;
+
+        function drawWheel() {
+            ctx.clearRect(0, 0, 500, 500);
+            for (let i = 0; i < labels.length; i++) {
+                const angle = startAngle + i * arc;
+                ctx.fillStyle = colors[i % colors.length];
+                
+                // Draw slice
+                ctx.beginPath();
+                ctx.arc(250, 250, 230, angle, angle + arc, false);
+                ctx.lineTo(250, 250);
+                ctx.fill();
+
+                // Draw emoji or text
+                ctx.save();
+                ctx.fillStyle = "white";
+                ctx.translate(250 + Math.cos(angle + arc / 2) * 165, 250 + Math.sin(angle + arc / 2) * 165);
+                ctx.rotate(angle + arc / 2 + Math.PI / 2);
+                
+                // Determine font size based on label length
+                let fontSize = 50;
+                if (labels[i].length > 2) {
+                    // For longer text (task names), use smaller font and scale down if needed
+                    fontSize = 22;
+                    ctx.font = `${fontSize}px Comic Sans MS`;
+                    const textWidth = ctx.measureText(labels[i]).width;
+                    if (textWidth > 100) {
+                        fontSize = Math.floor(22 * (100 / textWidth));
+                    }
+                }
+                ctx.font = `${fontSize}px Comic Sans MS`;
+                ctx.fillText(labels[i], -30, 15);
+                ctx.restore();
+            }
+        }
+
+        function rotateWheel() {
+            spinTime += 30;
+            if (spinTime >= spinTimeTotal) {
+                clearTimeout(spinTimeout);
+                return;
+            }
+            // Use easeOut to make the wheel slow down gradually
+            const spinAngle = spinAngleStart - easeOut(spinTime, 0, spinAngleStart, spinTimeTotal);
+            startAngle += (spinAngle * Math.PI / 180);
+            drawWheel();
+            spinTimeout = setTimeout(rotateWheel, 30);
+        }
+
+        function spinWheel() {
+            // Pick a random speed and duration
+            spinAngleStart = Math.random() * 10 + 10;
+            spinTime = 0;
+            spinTimeTotal = Math.random() * 3000 + 4000;
+            rotateWheel();
+        }
+
+        function easeOut(t, b, c, d) {
+            const ts = (t /= d) * t;
+            const tc = ts * t;
+            return b + c * (tc + -3 * ts + 3 * t);
+        }
+
+        // Add click event to canvas to spin the wheel
+        canvas.addEventListener('click', spinWheel);
+        canvas.style.cursor = 'pointer';
+        
+        // Initial draw
+        drawWheel();
+    </script>
+</body>
+</html>
