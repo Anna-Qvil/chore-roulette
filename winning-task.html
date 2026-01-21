@@ -404,6 +404,13 @@
         keepBtn.addEventListener('click', handleKeepTask);
         removeBtn.addEventListener('click', handleRemoveTask);
 
+        // Close modal when clicking outside of it
+        skipModal.addEventListener('click', (event) => {
+            if (event.target === skipModal) {
+                skipModal.classList.remove('active');
+            }
+        });
+
         window.addEventListener('storage', (event) => {
             if (event.key === 'chore-latest') {
                 loadLatest();
