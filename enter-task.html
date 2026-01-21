@@ -9,10 +9,19 @@
       /* --- Base Layout & iOS Optimizations --- */
       body {
         height: 100dvh;
-        overflow: hidden; 
-        box-sizing: border-box;
+        width: 100vw;
+        overflow: hidden;
+        margin: 0;
+        
+        /* Center the card vertically and horizontally */
+        display: flex;
+        align-items: center; 
+        justify-content: center;
+
+        /* Add safe area padding so it never touches the physical notch */
         padding-top: env(safe-area-inset-top);
         padding-bottom: env(safe-area-inset-bottom);
+        box-sizing: border-box;
       }
 
       #task-manager {
@@ -22,12 +31,15 @@
         width: 95%;
         max-width: 800px;
         box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        
         display: flex;
         flex-direction: column;
-        max-height: calc(100% - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 20px);
+        
+        /* Reduce max-height slightly to ensure clearance for the menu button */
+        max-height: 85%; 
+        
         padding: 15px;
         box-sizing: border-box;
-        margin: 10px auto;
       }
 
       h2 {
