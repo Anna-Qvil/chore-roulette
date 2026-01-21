@@ -1,3 +1,7 @@
+* {
+    -webkit-tap-highlight-color: transparent; /* Fixes gray flash on tap */
+}
+
 /* Shared styles for the entire app */
 body {
     display: flex;
@@ -8,6 +12,9 @@ body {
     margin: 0;
     background-color: #FFF9E6; /* Soft yellow background */
     font-family: 'Comic Sans MS', cursive, sans-serif;
+    overscroll-behavior: none; /* Prevents "pull-to-refresh" bounce */
+    -webkit-user-select: none; /* Prevents text selection popups */
+    user-select: none;
 }
 
 #wheel-container {
@@ -48,9 +55,26 @@ button {
     cursor: pointer;
     box-shadow: 0 6px #CC5555;
     transition: transform 0.1s;
+    touch-action: manipulation;
 }
 
 button:active {
     box-shadow: 0 2px #CC5555;
     transform: translateY(4px);
+}
+
+/* Allow selection only in inputs */
+input, select, textarea {
+    -webkit-user-select: text;
+    user-select: text;
+    font-size: 16px !important; /* iOS specific: prevents auto-zoom on focus */
+}
+
+#wheel-container {
+    position: relative;
+    width: 90vw;   /* Matches the JS resize logic */
+    max-width: 500px;
+    height: auto;
+    aspect-ratio: 1 / 1;
+    margin-bottom: 30px;
 }

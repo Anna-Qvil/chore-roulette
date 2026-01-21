@@ -14,56 +14,89 @@
     </div>
 
     <script>
-        const canvas = document.getElementById('canvas');
+       const canvas = document.getElementById('canvas');
         const ctx = canvas.getContext('2d');
         const colors = ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40'];
-        
-        // Load tasks from localStorage
-        let tasks = JSON.parse(localStorage.getItem('chore-tasks')) || [];
-        
-        // Get valid tasks (non-empty names)
-        const validTasks = tasks.filter(t => t.name && t.name.trim() !== '');
-        const labels = validTasks.length > 0 ? validTasks.map(t => t.emoji || t.name) : [''];
-        const names = validTasks.length > 0 ? validTasks.map(t => t.name) : [''];
-        
+
+        // Load tasks logic
+        const allTasks = JSON.parse(localStorage.getItem('chore-tasks')) || [];
+        const finishedTaskIds = JSON.parse(localStorage.getItem('chore-finished') || '[]');
+
+        const validTasks = allTasks.filter(t => {
+            if (!t.name || t.name.trim() === '') return false;
+            if (finishedTaskIds.includes(t.id)) return false;
+            if (t.dependency) {
+                const dependencyId = Number(t.dependency);
+                if (!finishedTaskIds.includes(dependencyId)) return false;
+            }
+            return true;
+        });
+
+        const labels = validTasks.length > 0 ? validTasks.map(t => t.emoji || t.name) : ['Add tasks'];
+        const sliceCount = labels.length || 1;
+
         let startAngle = 0;
-        const arc = Math.PI / (labels.length / 2);
+        const arc = Math.PI / (sliceCount / 2);
         let spinTimeout = null;
         let spinAngleStart = 0;
         let spinTime = 0;
         let spinTimeTotal = 0;
 
+        // Responsive sizing variables
+        let centerX, centerY, radius;
+
+        function resizeCanvas() {
+            // 1. Get the current width of the container or window
+            const availableWidth = window.innerWidth > 0 ? window.innerWidth : screen.width;
+            
+            // 2. Calculate the size (90% of width, capped at 500px)
+            const size = Math.min(availableWidth * 0.9, 500);
+            
+            // 3. Update canvas dimensions
+            canvas.width = size;
+            canvas.height = size;
+            
+            // 4. Update center points
+            centerX = canvas.width / 2;
+            centerY = canvas.height / 2;
+            
+            // 5. SAFETY CHECK: Ensure radius is at least 10px to prevent IndexSizeError
+            // We subtract 20px for padding/border, but clamp it at a positive number
+            radius = Math.max((canvas.width / 2) - 20, 10); 
+            
+            drawWheel();
+        }
+
         function drawWheel() {
-            ctx.clearRect(0, 0, 500, 500);
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
             for (let i = 0; i < labels.length; i++) {
                 const angle = startAngle + i * arc;
                 ctx.fillStyle = colors[i % colors.length];
                 
-                // Draw slice
                 ctx.beginPath();
-                ctx.arc(250, 250, 230, angle, angle + arc, false);
-                ctx.lineTo(250, 250);
+                ctx.arc(centerX, centerY, radius, angle, angle + arc, false);
+                ctx.lineTo(centerX, centerY);
                 ctx.fill();
 
-                // Draw emoji or text
                 ctx.save();
                 ctx.fillStyle = "white";
-                ctx.translate(250 + Math.cos(angle + arc / 2) * 165, 250 + Math.sin(angle + arc / 2) * 165);
+                // Position text relative to dynamic radius
+                ctx.translate(centerX + Math.cos(angle + arc / 2) * (radius * 0.7), centerY + Math.sin(angle + arc / 2) * (radius * 0.7));
                 ctx.rotate(angle + arc / 2 + Math.PI / 2);
                 
-                // Determine font size based on label length
-                let fontSize = 50;
+                // Scale font based on wheel size
+                let fontSize = Math.floor(canvas.width / 10);
                 if (labels[i].length > 2) {
-                    // For longer text (task names), use smaller font and scale down if needed
-                    fontSize = 22;
+                    fontSize = Math.floor(canvas.width / 22);
                     ctx.font = `${fontSize}px Comic Sans MS`;
                     const textWidth = ctx.measureText(labels[i]).width;
-                    if (textWidth > 100) {
-                        fontSize = Math.floor(22 * (100 / textWidth));
+                    if (textWidth > (radius * 0.4)) {
+                        fontSize = Math.floor(fontSize * ((radius * 0.4) / textWidth));
                     }
                 }
                 ctx.font = `${fontSize}px Comic Sans MS`;
-                ctx.fillText(labels[i], -30, 15);
+                ctx.textAlign = "center";
+                ctx.fillText(labels[i], 0, 0);
                 ctx.restore();
             }
         }
@@ -72,9 +105,9 @@
             spinTime += 30;
             if (spinTime >= spinTimeTotal) {
                 clearTimeout(spinTimeout);
+                finalizeSpin();
                 return;
             }
-            // Use easeOut to make the wheel slow down gradually
             const spinAngle = spinAngleStart - easeOut(spinTime, 0, spinAngleStart, spinTimeTotal);
             startAngle += (spinAngle * Math.PI / 180);
             drawWheel();
@@ -82,11 +115,58 @@
         }
 
         function spinWheel() {
+            if (!validTasks.length) {
+                alert('Please add at least one task before spinning the wheel.');
+                return;
+            }
             // Pick a random speed and duration
             spinAngleStart = Math.random() * 10 + 10;
             spinTime = 0;
             spinTimeTotal = Math.random() * 3000 + 4000;
             rotateWheel();
+        }
+
+        function finalizeSpin() {
+            if (!validTasks.length) {
+                return;
+            }
+
+            const degrees = (startAngle * 180 / Math.PI) + 90;
+            const arcd = arc * 180 / Math.PI;
+            const index = Math.floor((360 - (degrees % 360)) / arcd) % validTasks.length;
+            const selectedTask = validTasks[index];
+
+            const totalSeconds = Number.parseInt(selectedTask.time, 10) > 0
+                ? Number.parseInt(selectedTask.time, 10) * 60
+                : 0;
+
+            const latest = {
+                task: {
+                    id: selectedTask.id || null,
+                    emoji: selectedTask.emoji || '',
+                    name: selectedTask.name || '',
+                    time: selectedTask.time || '',
+                    dependency: selectedTask.dependency || ''
+                },
+                totalSeconds,
+                remainingSeconds: totalSeconds,
+                selectedAt: Date.now(),
+                status: 'pending'
+            };
+
+            localStorage.setItem('chore-latest', JSON.stringify(latest));
+
+            setTimeout(() => {
+                try {
+                    if (window.parent && typeof window.parent.loadPage === 'function') {
+                        window.parent.loadPage('winning-task.html');
+                        return;
+                    }
+                } catch (err) {
+                    // Fallback below if parent navigation fails
+                }
+                window.location.href = 'winning-task.html';
+            }, 1000);
         }
 
         function easeOut(t, b, c, d) {
@@ -95,12 +175,11 @@
             return b + c * (tc + -3 * ts + 3 * t);
         }
 
-        // Add click event to canvas to spin the wheel
+        window.addEventListener('resize', resizeCanvas);
         canvas.addEventListener('click', spinWheel);
-        canvas.style.cursor = 'pointer';
-        
-        // Initial draw
-        drawWheel();
+
+        // Initial setup
+        resizeCanvas();
     </script>
 </body>
 </html>
