@@ -82,8 +82,8 @@
 
         .close-btn {
             position: absolute;
-            top: 20px;
-            right: 20px;
+            top: calc(20px + env(safe-area-inset-top));
+            right: calc(20px + env(safe-area-inset-right));
             color: #FF4500;
             font-size: 40px;
             cursor: pointer;

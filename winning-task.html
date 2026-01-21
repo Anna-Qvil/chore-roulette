@@ -299,6 +299,7 @@
         let totalSeconds = 0;
         let remainingSeconds = 0;
         let timerId = null;
+        let wakeLock = null;
 
         function formatTime(totalSeconds) {
             const mins = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
@@ -360,6 +361,27 @@
                 clearInterval(timerId);
                 timerId = null;
             }
+            releaseWakeLock();
+        }
+
+        async function requestWakeLock() {
+            try {
+                if ('wakeLock' in navigator) {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    wakeLock.addEventListener('release', () => {
+                        console.log('Wake Lock released');
+                    });
+                }
+            } catch (err) {
+                console.error('Wake Lock error:', err);
+            }
+        }
+
+        function releaseWakeLock() {
+            if (wakeLock) {
+                wakeLock.release();
+                wakeLock = null;
+            }
         }
 
         function markTaskAsFinished() {
@@ -407,6 +429,7 @@
             persist('running');
             renderLatest('running');
             timerId = setInterval(tick, 1000);
+            requestWakeLock();
         }
 
         function pauseTimer() {
@@ -479,6 +502,13 @@
         window.addEventListener('storage', (event) => {
             if (event.key === 'chore-latest') {
                 loadLatest();
+            }
+        });
+
+        // Handle page visibility changes to manage wake lock
+        document.addEventListener('visibilitychange', async () => {
+            if (document.visibilityState === 'visible' && latest?.status === 'running') {
+                await requestWakeLock();
             }
         });
 
