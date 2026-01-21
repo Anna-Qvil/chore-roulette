@@ -2,93 +2,169 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content" />
     <title>Task Manager</title>
     <link rel="stylesheet" href="styles.css" />
     <style>
-      input,
-      select {
-        -webkit-appearance: none; /* Removes iOS default styling */
-        appearance: none;
-        background-color: white;
-        /* Ensure font size is at least 16px to prevent auto-zoom */
-        font-size: 16px;
-      }
-      /* Container for the task manager UI */
-      #task-manager {
-        background: white;
-        padding: 25px;
-        border-radius: 20px;
-        border: 8px solid #ffd700;
-        width: 90%;
-        max-width: 700px;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
-        margin-bottom: env(safe-area-inset-bottom);
+      /* --- iOS Specific Optimization Overrides --- */
+      
+      body {
+        /* Ensure the body takes full height but doesn't bounce */
+        height: 100dvh;
+        overflow: hidden; /* We will scroll inside the container */
       }
 
-      /* Task row layout */
+      /* Main Card Container */
+      #task-manager {
+        background: white;
+        border-radius: 24px; /* Softer, more iOS-like corners */
+        border: 6px solid #ffd700;
+        width: 95%; /* Wider on mobile */
+        max-width: 650px; /* Cap width for iPad */
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        
+        /* Layout for internal scrolling */
+        display: flex;
+        flex-direction: column;
+        max-height: 90dvh; /* Don't touch edges */
+        padding: 20px 15px; /* Reduced side padding for mobile space */
+        box-sizing: border-box;
+      }
+
+      h2 {
+        font-size: 1.5rem;
+        margin-bottom: 15px;
+        flex-shrink: 0; /* Header doesn't shrink */
+      }
+
+      /* Scrollable Area */
+      #task-list {
+        flex-grow: 1;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch; /* Smooth momentum scrolling on iOS */
+        padding-right: 5px; /* Space for scrollbar */
+        padding-bottom: 10px;
+        margin-bottom: 10px;
+      }
+
+      /* Task Row Layout */
       .task-row {
         display: flex;
-        gap: 10px;
+        gap: 8px;
         margin-bottom: 12px;
         align-items: center;
       }
 
+      /* Input Styling for iOS */
       input,
       select {
-        padding: 10px;
-        border: 2px solid #fff9e6;
-        border-radius: 10px;
+        -webkit-appearance: none;
+        appearance: none;
+        background-color: #fff9e6;
+        border: 2px solid transparent;
+        border-radius: 12px;
         font-family: inherit;
-        font-size: 14px;
+        /* Critical: 16px prevents iOS auto-zoom on focus */
+        font-size: 16px; 
+        color: #333;
+        padding: 0 10px;
+        height: 44px; /* Minimum Apple touch target size */
+        transition: border-color 0.2s, box-shadow 0.2s;
+        box-sizing: border-box;
       }
 
-      .btn-delete {
-        padding: 4px;
-        background-color: transparent;
-        border: none;
+      input:focus, select:focus {
+        border-color: #ffd700;
         outline: none;
+        background-color: #fff;
+        box-shadow: 0 0 0 4px rgba(255, 215, 0, 0.2);
+      }
+
+      /* Specific Field Sizing */
+      .inp-emoji {
+        width: 44px; /* Square touch target */
+        text-align: center;
+        padding: 0;
+        flex-shrink: 0;
+      }
+      
+      .inp-name {
+        flex-grow: 2;
+        min-width: 80px; /* Prevent crushing on small screens */
+      }
+      
+      .inp-time {
+        width: 60px;
+        text-align: center;
+        flex-shrink: 0;
+      }
+      
+      .sel-dep {
+        flex-grow: 1;
+        width: 100px; /* Allow shrinking/growing */
+        text-overflow: ellipsis;
+      }
+
+      /* Delete Button */
+      .btn-delete {
+        width: 44px;
+        height: 44px;
+        background-color: #FFF0F0;
+        border-radius: 12px;
+        border: none;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
-        box-shadow: none;
+        flex-shrink: 0;
+        color: #FF4500;
+        transition: background-color 0.2s;
+        padding: 0; /* Reset padding */
       }
 
-      .btn-delete:hover {
-        opacity: 0.7;
+      .btn-delete:active {
+        background-color: #FFD1D1;
+        transform: scale(0.95);
+      }
+      
+      .btn-delete svg {
+        width: 20px;
+        height: 20px;
+        fill: currentColor;
       }
 
-      .btn-delete:active,
-      .btn-delete:focus {
-        outline: none;
-        box-shadow: none;
-      }
-
-      .btn-delete img {
-        width: 24px;
-        height: 24px;
-      }
-
-      .inp-emoji {
-        width: 45px;
+      /* Add Task Button Footer */
+      .footer-actions {
+        flex-shrink: 0;
         text-align: center;
-      }
-      .inp-name {
-        flex-grow: 2;
-      }
-      .inp-time {
-        width: 70px;
-      }
-      .sel-dep {
-        flex-grow: 1;
+        padding-top: 10px;
+        border-top: 1px solid #eee;
       }
 
-      /* Adjusted button size for list view */
       button#add-task-btn {
-        padding: 12px 30px;
+        width: 100%;
+        max-width: 300px;
+        padding: 14px;
         font-size: 18px;
-        margin-top: 15px;
+        border-radius: 16px;
+        margin-top: 5px;
+        background-color: #FF6B6B; /* Match styles.css but ensure it overrides */
+        box-shadow: 0 4px #CC5555;
+      }
+      
+      button#add-task-btn:active {
+        transform: translateY(2px);
+        box-shadow: 0 2px #CC5555;
+      }
+
+      /* iPad Optimization */
+      @media (min-width: 768px) {
+        #task-manager {
+            padding: 30px;
+        }
+        .task-row {
+            gap: 15px;
+        }
       }
     </style>
   </head>
@@ -97,9 +173,10 @@
       <h2 style="text-align: center; color: #ff4500; margin-top: 0">
         Task list
       </h2>
+      
       <div id="task-list"></div>
 
-      <div style="text-align: center">
+      <div class="footer-actions">
         <button id="add-task-btn">Add task</button>
       </div>
     </div>
@@ -113,12 +190,10 @@
         { id: Date.now(), emoji: "", name: "", time: "", dependency: "" },
       ];
 
-      // Save tasks to localStorage
       function saveTasks() {
         localStorage.setItem("chore-tasks", JSON.stringify(tasks));
       }
 
-      // Helper: Generates the <option> list for any dropdown
       function getDependencyOptions(currentTaskId, selectedId) {
         let html = '<option value="">No dependency</option>';
         tasks.forEach((t) => {
@@ -131,13 +206,14 @@
         return html;
       }
 
-      // Updates all dropdowns without rebuilding the whole list (prevents focus loss)
       function updateAllDropdowns() {
         const selects = document.querySelectorAll(".sel-dep");
         tasks.forEach((task, index) => {
           const select = selects[index];
           if (select) {
-            select.innerHTML = getDependencyOptions(task.id, task.dependency);
+            // Save current selection before updating HTML
+            const currentVal = task.dependency;
+            select.innerHTML = getDependencyOptions(task.id, currentVal);
           }
         });
       }
@@ -148,14 +224,21 @@
           const row = document.createElement("div");
           row.className = "task-row";
 
+          // Using an inline SVG for the delete icon so no external image is needed
+          const deleteIconSvg = `
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          `;
+
           row.innerHTML = `
                     <input type="text" class="inp-emoji" placeholder="Icon" value="${task.emoji}">
                     <input type="text" class="inp-name" placeholder="Task name" value="${task.name}">
-                    <input type="number" class="inp-time" placeholder="Mins" value="${task.time}" min="0">
+                    <input type="number" class="inp-time" placeholder="Min" value="${task.time}" min="0">
                     <select class="sel-dep">
                         ${getDependencyOptions(task.id, task.dependency)}
                     </select>
-                    <button class="btn-delete" data-index="${index}"><img src="delete-icon.png" alt="Delete"></button>
+                    <button class="btn-delete" data-index="${index}">${deleteIconSvg}</button>
                 `;
 
           // Event Listeners
@@ -166,7 +249,7 @@
           };
           inputs[1].oninput = (e) => {
             tasks[index].name = e.target.value;
-            updateAllDropdowns(); // Update labels in dropdowns as you type
+            updateAllDropdowns();
             saveTasks();
           };
           inputs[2].oninput = (e) => {
@@ -191,20 +274,19 @@
         });
 
         addTaskBtn.style.display = tasks.length >= 10 ? "none" : "inline-block";
+        
+        // Auto-scroll to bottom only if a new task was likely added (optional polish)
+        // taskListContainer.scrollTop = taskListContainer.scrollHeight;
       }
 
       addTaskBtn.addEventListener("click", () => {
-        if (tasks.length >= 10) {
-          return;
-        }
+        if (tasks.length >= 10) return;
 
-        // Validate the last task before adding a new one
+        // Validation
         if (tasks.length > 0) {
           const lastTask = tasks[tasks.length - 1];
           if (!lastTask.name.trim() || !lastTask.time || lastTask.time <= 0) {
-            alert(
-              "Please fill in the task name and time (in minutes) before adding a new task.",
-            );
+            alert("Please fill in the task name and time (in minutes) before adding a new task.");
             return;
           }
         }
@@ -218,6 +300,14 @@
         });
         saveTasks();
         renderTasks();
+        
+        // Smooth scroll to the new task
+        setTimeout(() => {
+            taskListContainer.scrollTo({
+                top: taskListContainer.scrollHeight,
+                behavior: 'smooth'
+            });
+        }, 100);
       });
 
       // Initial render
