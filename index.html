@@ -144,14 +144,26 @@
             document.getElementById('content-frame').classList.remove('hidden');
         }
 
+        function openMenu() {
+            document.getElementById('navMenu').style.display = 'flex';
+        }
+
+        function closeMenu() {
+            document.getElementById('navMenu').style.display = 'none';
+        }
+
         function toggleMenu() {
             const menu = document.getElementById('navMenu');
-            menu.style.display = (menu.style.display === 'flex') ? 'none' : 'flex';
+            if (menu.style.display === 'flex') {
+                closeMenu();
+            } else {
+                openMenu();
+            }
         }
 
         function loadPage(url) {
             document.getElementById('content-frame').src = url;
-            toggleMenu();
+            closeMenu();
         }
 
         function resetWheel() {
