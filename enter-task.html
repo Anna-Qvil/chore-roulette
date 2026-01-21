@@ -6,134 +6,134 @@
     <title>Task Manager</title>
     <link rel="stylesheet" href="styles.css" />
     <style>
-      /* --- iOS Specific Optimization Overrides --- */
-      
+      /* --- Base Layout & iOS Optimizations --- */
       body {
-        /* Ensure the body takes full height but doesn't bounce */
         height: 100dvh;
-        overflow: hidden; /* We will scroll inside the container */
+        overflow: hidden; 
       }
 
-      /* Main Card Container */
       #task-manager {
         background: white;
-        border-radius: 24px; /* Softer, more iOS-like corners */
+        border-radius: 24px;
         border: 6px solid #ffd700;
-        width: 95%; /* Wider on mobile */
-        max-width: 650px; /* Cap width for iPad */
+        width: 95%;
+        max-width: 800px;
         box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
-        
-        /* Layout for internal scrolling */
         display: flex;
         flex-direction: column;
-        max-height: 90dvh; /* Don't touch edges */
-        padding: 20px 15px; /* Reduced side padding for mobile space */
+        max-height: 90dvh;
+        padding: 15px;
         box-sizing: border-box;
       }
 
       h2 {
         font-size: 1.5rem;
         margin-bottom: 15px;
-        flex-shrink: 0; /* Header doesn't shrink */
+        flex-shrink: 0;
       }
 
-      /* Scrollable Area */
       #task-list {
         flex-grow: 1;
         overflow-y: auto;
-        -webkit-overflow-scrolling: touch; /* Smooth momentum scrolling on iOS */
-        padding-right: 5px; /* Space for scrollbar */
-        padding-bottom: 10px;
-        margin-bottom: 10px;
+        -webkit-overflow-scrolling: touch;
+        padding-right: 5px;
+        padding-bottom: 20px;
       }
 
-      /* Task Row Layout */
+      /* --- MOBILE CARD LAYOUT --- */
       .task-row {
-        display: flex;
-        gap: 8px;
+        display: grid;
+        /* Columns: Emoji | Name (flex) | Delete Button */
+        grid-template-columns: 50px 1fr 44px; 
+        grid-template-areas: 
+            "emoji name name"
+            "time  dep  delete";
+        gap: 10px;
+        
+        background-color: #fdfdfd;
+        border: 1px solid #f0f0f0;
+        padding: 12px;
+        border-radius: 16px; 
         margin-bottom: 12px;
-        align-items: center;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.03);
       }
 
-      /* Input Styling for iOS */
-      input,
-      select {
+      .inp-emoji { grid-area: emoji; }
+      .inp-name  { grid-area: name; }
+      .inp-time  { grid-area: time; }
+      .sel-dep   { grid-area: dep; }
+      .btn-delete{ grid-area: delete; }
+
+      /* Input Base Styles */
+      input, select {
         -webkit-appearance: none;
         appearance: none;
         background-color: #fff9e6;
         border: 2px solid transparent;
         border-radius: 12px;
         font-family: inherit;
-        /* Critical: 16px prevents iOS auto-zoom on focus */
         font-size: 16px; 
         color: #333;
-        padding: 0 10px;
-        height: 44px; /* Minimum Apple touch target size */
-        transition: border-color 0.2s, box-shadow 0.2s;
+        padding: 0 12px;
+        height: 44px; 
+        width: 100%;
         box-sizing: border-box;
+        transition: all 0.2s;
       }
 
       input:focus, select:focus {
         border-color: #ffd700;
-        outline: none;
         background-color: #fff;
-        box-shadow: 0 0 0 4px rgba(255, 215, 0, 0.2);
+        outline: none;
       }
 
-      /* Specific Field Sizing */
-      .inp-emoji {
-        width: 44px; /* Square touch target */
-        text-align: center;
-        padding: 0;
-        flex-shrink: 0;
-      }
-      
-      .inp-name {
-        flex-grow: 2;
-        min-width: 80px; /* Prevent crushing on small screens */
-      }
-      
-      .inp-time {
-        width: 60px;
-        text-align: center;
-        flex-shrink: 0;
-      }
-      
+      /* --- DEPENDENCY DROPDOWN STYLING --- */
       .sel-dep {
-        flex-grow: 1;
-        width: 100px; /* Allow shrinking/growing */
+        /* Add a custom SVG arrow so it looks like a dropdown */
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23FF4500' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 10px center;
+        background-size: 16px;
+        padding-right: 30px; /* Make room for the arrow */
+        
         text-overflow: ellipsis;
+        white-space: nowrap;
+        overflow: hidden;
       }
 
-      /* Delete Button */
+      .inp-emoji { text-align: center; padding: 0; }
+      .inp-name { font-weight: 500; }
+      .inp-time { text-align: center; padding: 0 5px; }
+
+      /* --- DELETE BUTTON STYLING --- */
       .btn-delete {
         width: 44px;
         height: 44px;
-        background-color: #FFF0F0;
-        border-radius: 12px;
+        background-color: transparent; /* No shading */
         border: none;
-        cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
-        flex-shrink: 0;
-        color: #FF4500;
-        transition: background-color 0.2s;
-        padding: 0; /* Reset padding */
-      }
-
-      .btn-delete:active {
-        background-color: #FFD1D1;
-        transform: scale(0.95);
+        color: #FF4500; /* Red icon color */
+        cursor: pointer;
+        padding: 0;
+        box-shadow: none;
       }
       
-      .btn-delete svg {
-        width: 20px;
-        height: 20px;
-        fill: currentColor;
+      /* Subtle press effect */
+      .btn-delete:active {
+        opacity: 0.6;
+        transform: scale(0.9);
+        box-shadow: none;
       }
 
-      /* Add Task Button Footer */
+      .btn-delete svg {
+        width: 24px;
+        height: 24px;
+        stroke-width: 2;
+      }
+
+      /* Footer */
       .footer-actions {
         flex-shrink: 0;
         text-align: center;
@@ -143,28 +143,42 @@
 
       button#add-task-btn {
         width: 100%;
-        max-width: 300px;
+        max-width: 320px;
         padding: 14px;
         font-size: 18px;
         border-radius: 16px;
         margin-top: 5px;
-        background-color: #FF6B6B; /* Match styles.css but ensure it overrides */
-        box-shadow: 0 4px #CC5555;
+        background-color: #FF6B6B;
+        color: white;
+        font-weight: bold;
+        border: none;
+        box-shadow: 0 4px #d64d4d;
       }
       
       button#add-task-btn:active {
         transform: translateY(2px);
-        box-shadow: 0 2px #CC5555;
+        box-shadow: 0 2px #d64d4d;
       }
 
-      /* iPad Optimization */
+      /* --- TABLET / DESKTOP OVERRIDES --- */
       @media (min-width: 768px) {
-        #task-manager {
-            padding: 30px;
-        }
+        #task-manager { padding: 30px; }
+        
         .task-row {
-            gap: 15px;
+            display: flex; /* Single row */
+            background-color: transparent;
+            border: none;
+            box-shadow: none;
+            padding: 0;
+            margin-bottom: 15px;
+            gap: 12px;
         }
+
+        .inp-emoji { width: 50px; flex-shrink: 0; }
+        .inp-name  { flex-grow: 2; width: auto; }
+        .inp-time  { width: 80px; flex-shrink: 0; }
+        .sel-dep   { width: 200px; flex-shrink: 0; }
+        .btn-delete{ width: 44px; flex-shrink: 0; }
       }
     </style>
   </head>
@@ -177,7 +191,7 @@
       <div id="task-list"></div>
 
       <div class="footer-actions">
-        <button id="add-task-btn">Add task</button>
+        <button id="add-task-btn">Add Task</button>
       </div>
     </div>
 
@@ -185,7 +199,6 @@
       const taskListContainer = document.getElementById("task-list");
       const addTaskBtn = document.getElementById("add-task-btn");
 
-      // Load tasks from localStorage or initialize with empty task
       let tasks = JSON.parse(localStorage.getItem("chore-tasks")) || [
         { id: Date.now(), emoji: "", name: "", time: "", dependency: "" },
       ];
@@ -198,9 +211,10 @@
         let html = '<option value="">No dependency</option>';
         tasks.forEach((t) => {
           if (t.id !== currentTaskId && t.name.trim() !== "") {
-            const isSelected =
-              String(t.id) === String(selectedId) ? "selected" : "";
-            html += `<option value="${t.id}" ${isSelected}>After: ${t.name}</option>`;
+            const isSelected = String(t.id) === String(selectedId) ? "selected" : "";
+            let label = t.name;
+            if (label.length > 20) label = label.substring(0, 18) + "...";
+            html += `<option value="${t.id}" ${isSelected}>After: ${label}</option>`;
           }
         });
         return html;
@@ -211,7 +225,6 @@
         tasks.forEach((task, index) => {
           const select = selects[index];
           if (select) {
-            // Save current selection before updating HTML
             const currentVal = task.dependency;
             select.innerHTML = getDependencyOptions(task.id, currentVal);
           }
@@ -224,10 +237,11 @@
           const row = document.createElement("div");
           row.className = "task-row";
 
-          // Using an inline SVG for the delete icon so no external image is needed
           const deleteIconSvg = `
-            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 6h18"></path>
+                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
             </svg>
           `;
 
@@ -238,30 +252,16 @@
                     <select class="sel-dep">
                         ${getDependencyOptions(task.id, task.dependency)}
                     </select>
-                    <button class="btn-delete" data-index="${index}">${deleteIconSvg}</button>
+                    <button class="btn-delete" aria-label="Delete task">${deleteIconSvg}</button>
                 `;
 
-          // Event Listeners
           const inputs = row.querySelectorAll("input");
-          inputs[0].oninput = (e) => {
-            tasks[index].emoji = e.target.value;
-            saveTasks();
-          };
-          inputs[1].oninput = (e) => {
-            tasks[index].name = e.target.value;
-            updateAllDropdowns();
-            saveTasks();
-          };
-          inputs[2].oninput = (e) => {
-            tasks[index].time = e.target.value;
-            saveTasks();
-          };
+          inputs[0].oninput = (e) => { tasks[index].emoji = e.target.value; saveTasks(); };
+          inputs[1].oninput = (e) => { tasks[index].name = e.target.value; updateAllDropdowns(); saveTasks(); };
+          inputs[2].oninput = (e) => { tasks[index].time = e.target.value; saveTasks(); };
 
           const select = row.querySelector("select");
-          select.onchange = (e) => {
-            tasks[index].dependency = e.target.value;
-            saveTasks();
-          };
+          select.onchange = (e) => { tasks[index].dependency = e.target.value; saveTasks(); };
 
           const deleteBtn = row.querySelector(".btn-delete");
           deleteBtn.onclick = () => {
@@ -274,43 +274,28 @@
         });
 
         addTaskBtn.style.display = tasks.length >= 10 ? "none" : "inline-block";
-        
-        // Auto-scroll to bottom only if a new task was likely added (optional polish)
-        // taskListContainer.scrollTop = taskListContainer.scrollHeight;
       }
 
       addTaskBtn.addEventListener("click", () => {
         if (tasks.length >= 10) return;
 
-        // Validation
         if (tasks.length > 0) {
           const lastTask = tasks[tasks.length - 1];
           if (!lastTask.name.trim() || !lastTask.time || lastTask.time <= 0) {
-            alert("Please fill in the task name and time (in minutes) before adding a new task.");
+            alert("Please fill in the task name and time.");
             return;
           }
         }
 
-        tasks.push({
-          id: Date.now(),
-          emoji: "",
-          name: "",
-          time: "",
-          dependency: "",
-        });
+        tasks.push({ id: Date.now(), emoji: "", name: "", time: "", dependency: "" });
         saveTasks();
         renderTasks();
         
-        // Smooth scroll to the new task
         setTimeout(() => {
-            taskListContainer.scrollTo({
-                top: taskListContainer.scrollHeight,
-                behavior: 'smooth'
-            });
+            taskListContainer.scrollTo({ top: taskListContainer.scrollHeight, behavior: 'smooth' });
         }, 100);
       });
 
-      // Initial render
       renderTasks();
     </script>
   </body>
