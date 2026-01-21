@@ -19,37 +19,37 @@
             -webkit-tap-highlight-color: transparent;
         }
         
-        /* The container now shrinks to fit the canvas exactly */
+        /* Container wraps the canvas tightly so the pointer can be positioned relative to it */
         #wheel-container {
             position: relative;
             width: auto;
             height: auto;
-            /* No padding needed, we position pointer absolutely */
+            /* Filter dropshadow applies to the whole wheel + pointer combo */
+            filter: drop-shadow(0 15px 25px rgba(0,0,0,0.15));
         }
         
-        /* Force pointer to stay relative to the wheel, not the page */
+        /* Pointer positioned absolutely relative to the #wheel-container */
         #pointer {
             position: absolute;
-            top: -25px; /* Shifts it up slightly so the point touches the wheel */
+            top: -25px; /* Pull it up so the tip overlaps the wheel slightly */
             left: 50%;
             transform: translateX(-50%);
             width: 0; 
             height: 0; 
-            border-left: 20px solid transparent;
-            border-right: 20px solid transparent;
-            border-top: 40px solid #FF4500; /* Red triangle pointing down */
+            border-left: 25px solid transparent; /* Wider triangle */
+            border-right: 25px solid transparent;
+            border-top: 50px solid #FF4500;
             z-index: 10;
-            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.2)); /* Adds shadow to the triangle */
         }
         
         canvas {
             display: block;
             touch-action: manipulation;
-            /* Optional: Add a border/shadow to the wheel itself */
             border-radius: 50%;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
             border: 8px solid #FFD700;
-            box-sizing: border-box; /* Includes border in width calculation */
+            background-color: white;
+            /* Ensure the canvas doesn't get stretched by flexbox */
+            flex-shrink: 0; 
         }
     </style>
 </head>
@@ -88,41 +88,53 @@
         let spinTime = 0;
         let spinTimeTotal = 0;
 
+        let logicalSize = 500;
         let centerX, centerY, radius;
-        let logicalSize = 500; 
 
         function resizeCanvas() {
-            // 1. Available width
-            const availableWidth = window.innerWidth > 0 ? window.innerWidth : screen.width;
+            // 1. Determine available width (window or screen)
+            const availableWidth = window.innerWidth;
             
-            // 2. Logical size (90% width, max 500px)
+            // 2. Set the "Logical" size (CSS pixels)
+            // We cap it at 500px, or 90% of the screen width
             logicalSize = Math.min(availableWidth * 0.9, 500);
             
-            // 3. Retina/High DPI support
-            const dpr = window.devicePixelRatio || 1;
+            // 3. Get Device Pixel Ratio
+            // Force at least 2.0 (High DPI) even if the browser reports 1, 
+            // which acts as supersampling to kill blur on all devices.
+            const dpr = Math.max(window.devicePixelRatio || 2, 2);
 
-            // 4. Set CSS size
+            // 4. Set CSS Dimensions (Layout size)
             canvas.style.width = `${logicalSize}px`;
             canvas.style.height = `${logicalSize}px`;
 
-            // 5. Set Bitmap size
+            // 5. Set Actual Bitmap Dimensions (Multiplied by DPR)
+            // Setting canvas.width/height automatically clears the context
             canvas.width = logicalSize * dpr;
             canvas.height = logicalSize * dpr;
             
-            // 6. Scale context
+            // 6. Normalize the Coordinate System
+            // We scale the context so we can draw using "logical" coordinates (0-500)
+            // but the browser draws them onto the high-res bitmap.
+            ctx.setTransform(1, 0, 0, 1, 0, 0); // Reset transform just in case
             ctx.scale(dpr, dpr);
             
-            // 7. Calculate centers
+            // 7. Recalculate drawing variables based on LOGICAL size
             centerX = logicalSize / 2;
             centerY = logicalSize / 2;
             
-            // 8. Radius (subtract border width so text doesn't hit edge)
-            radius = Math.max((logicalSize / 2) - 15, 10); 
+            // Subtract border/padding from radius
+            radius = Math.max((logicalSize / 2) - 10, 10); 
+            
+            // 8. Improve text rendering
+            ctx.textBaseline = 'middle';
+            ctx.textAlign = "center";
             
             drawWheel();
         }
 
         function drawWheel() {
+            // Clear the logical rectangle
             ctx.clearRect(0, 0, logicalSize, logicalSize);
             
             for (let i = 0; i < labels.length; i++) {
@@ -136,20 +148,38 @@
 
                 ctx.save();
                 ctx.fillStyle = "white";
-                ctx.translate(centerX + Math.cos(angle + arc / 2) * (radius * 0.7), centerY + Math.sin(angle + arc / 2) * (radius * 0.7));
-                ctx.rotate(angle + arc / 2 + Math.PI / 2);
                 
+                // Move context to the center of the wedge
+                const textAngle = angle + arc / 2;
+                ctx.translate(
+                    centerX + Math.cos(textAngle) * (radius * 0.7), 
+                    centerY + Math.sin(textAngle) * (radius * 0.7)
+                );
+                ctx.rotate(textAngle + Math.PI / 2);
+                
+                // Dynamic Font Sizing
+                // Base font size on the wheel size
                 let fontSize = Math.floor(logicalSize / 10);
+                
+                // If text is long, shrink it to fit
                 if (labels[i].length > 2) {
-                    fontSize = Math.floor(logicalSize / 22);
-                    ctx.font = `bold ${fontSize}px Fredoka, 'Comic Sans MS', cursive`;
+                    fontSize = Math.floor(logicalSize / 18);
+                    ctx.font = `bold ${fontSize}px Fredoka, sans-serif`;
                     const textWidth = ctx.measureText(labels[i]).width;
-                    if (textWidth > (radius * 0.4)) {
-                        fontSize = Math.floor(fontSize * ((radius * 0.4) / textWidth));
+                    // Ensure text doesn't overflow wedge width
+                    const maxWedgeWidth = radius * 0.5; 
+                    if (textWidth > maxWedgeWidth) {
+                         fontSize = Math.floor(fontSize * (maxWedgeWidth / textWidth));
                     }
                 }
-                ctx.font = `bold ${fontSize}px Fredoka, 'Comic Sans MS', cursive`;
-                ctx.textAlign = "center";
+                
+                ctx.font = `bold ${fontSize}px Fredoka, sans-serif`;
+                
+                // Add a slight shadow to text for better readability on colors
+                ctx.shadowColor = "rgba(0,0,0,0.2)";
+                ctx.shadowBlur = 4;
+                ctx.shadowOffsetY = 1;
+                
                 ctx.fillText(labels[i], 0, 0);
                 ctx.restore();
             }
@@ -208,6 +238,7 @@
             localStorage.setItem('chore-latest', JSON.stringify(latest));
 
             setTimeout(() => {
+                // Navigate to winning page
                 try {
                     if (window.parent && typeof window.parent.loadPage === 'function') {
                         window.parent.loadPage('winning-task.html');
@@ -224,9 +255,16 @@
             return b + c * (tc + -3 * ts + 3 * t);
         }
 
-        window.addEventListener('resize', resizeCanvas);
+        // Listen for resize to keep canvas sharp
+        window.addEventListener('resize', () => {
+             // Debounce slightly to prevent thrashing
+             clearTimeout(window.resizeTimer);
+             window.resizeTimer = setTimeout(resizeCanvas, 100);
+        });
+        
         canvas.addEventListener('click', spinWheel);
 
+        // Initial setup
         resizeCanvas();
     </script>
 </body>
