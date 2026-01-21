@@ -56,13 +56,12 @@ button {
     border: none;
     border-radius: 50px;
     cursor: pointer;
-    box-shadow: 0 6px #CC5555;
+    box-shadow: none;
     transition: transform 0.1s;
     touch-action: manipulation;
 }
 
 button:active {
-    box-shadow: 0 2px #CC5555;
     transform: translateY(4px);
 }
 

@@ -2,122 +2,87 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
     <title>Current Task</title>
     <link rel="stylesheet" href="styles.css">
     <style>
-        /* Card layout for the current task view */
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap');
+
+        /* --- Global & Layout --- */
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100dvh; /* dynamic height for iOS address bars */
+            width: 100vw;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #FFF9E6;
+            font-family: 'Fredoka', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            overflow: hidden; /* Prevent background scroll */
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* --- Main Card --- */
         #current-task-card {
             background: white;
             width: 90%;
-            max-width: 640px;
-            padding: 40px 30px;
-            border-radius: 24px;
-            border: 10px solid #FFD700;
-            box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+            max-width: 600px; /* Cap width for iPad */
+            /* Vertical padding adjusted for balance */
+            padding: 40px 20px; 
+            border-radius: 30px;
+            border: 8px solid #FFD700;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.15);
             display: flex;
             flex-direction: column;
-            gap: 24px;
-            text-align: center;
-        }
-
-        /* Modal overlay */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.6);
-            z-index: 2000;
             align-items: center;
             justify-content: center;
-        }
-
-        .modal-overlay.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background: white;
-            border-radius: 24px;
-            border: 10px solid #FFD700;
-            padding: 40px 30px;
-            max-width: 500px;
+            gap: 25px;
             text-align: center;
-            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+            box-sizing: border-box;
+            
+            /* Ensure card fits on small screens vertically */
+            max-height: 90dvh;
+            overflow-y: auto; 
         }
 
-        .modal-content h2 {
-            color: #FF6B6B;
-            font-size: 2rem;
-            margin: 0 0 20px 0;
-        }
-
-        .modal-content p {
-            font-size: 1.2rem;
-            color: #1F2937;
-            margin: 0 0 30px 0;
-        }
-
-        .modal-buttons {
-            display: flex;
-            gap: 20px;
-            justify-content: center;
-        }
-
-        .modal-buttons button {
-            padding: 15px 40px;
-            font-size: 1.1rem;
-            font-weight: bold;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .modal-buttons button:active {
-            transform: scale(0.95);
-        }
-
-        .btn-keep {
-            background: #22C55E;
-            color: white;
-            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
-        }
-
-        .btn-keep:hover {
-            background: #16A34A;
-        }
-
-        .btn-remove {
-            background: #FF6B6B;
-            color: white;
-            box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
-        }
-
-        .btn-remove:hover {
-            background: #EF4444;
-        }
-
+        /* --- Typography --- */
         .task-name {
-            font-size: 3rem;
-            font-weight: bold;
+            /* clamp(min, preferred, max) scales text smoothly between iPhone and iPad */
+            font-size: clamp(2rem, 6vw, 3.5rem); 
+            font-weight: 700;
             color: #FF6B6B;
             margin: 0;
             line-height: 1.2;
             display: flex;
+            flex-direction: column; /* Stack emoji and text on small screens if needed */
             align-items: center;
             justify-content: center;
-            gap: 16px;
+            gap: 10px;
             word-break: break-word;
+            padding: 0 10px;
         }
 
+        .timer-display {
+            /* Huge font, but responsive */
+            font-size: clamp(4.5rem, 18vw, 7rem);
+            font-weight: 700;
+            color: #1F2937;
+            margin: 0;
+            letter-spacing: 2px;
+            line-height: 1;
+            
+            /* CRITICAL: Prevents timer from jiggling as numbers change width */
+            font-feature-settings: "tnum";
+            font-variant-numeric: tabular-nums;
+        }
+
+        /* --- Progress Bar --- */
         .progress-shell {
             position: relative;
             width: 100%;
-            height: 20px;
+            max-width: 400px; /* Don't get too wide on iPad */
+            height: 24px;
             background: #FFEFB0;
             border-radius: 999px;
             overflow: hidden;
@@ -129,24 +94,18 @@
             top: 0;
             left: 0;
             height: 100%;
-            width: 100%;
+            width: 100%; /* JS updates this */
             background: linear-gradient(90deg, #22C55E, #16A34A);
-            transition: width 0.25s ease;
+            transition: width 0.25s linear; /* Linear looks smoother for timers */
         }
 
-        .timer-display {
-            font-size: 5.5rem;
-            font-weight: bold;
-            color: #1F2937;
-            margin: 0;
-            letter-spacing: 3px;
-        }
-
+        /* --- Control Buttons --- */
         .controls {
             display: flex;
             justify-content: center;
-            gap: 20px;
+            gap: 25px;
             margin-top: 10px;
+            width: 100%;
         }
 
         .controls button {
@@ -158,27 +117,35 @@
             justify-content: center;
             padding: 0;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: transform 0.1s, opacity 0.2s;
+            border: none;
+            outline: none;
+            -webkit-user-select: none;
+            user-select: none;
         }
 
-        .controls button svg {
-            width: 40px;
-            height: 40px;
+        .controls button:active {
+            transform: scale(0.92);
         }
 
         .controls button:disabled {
-            opacity: 0.3;
+            opacity: 0.4;
             cursor: not-allowed;
+            transform: none;
         }
 
-        .controls button:active:not(:disabled) {
-            transform: scale(0.95);
+        .controls button svg {
+            width: 36px;
+            height: 36px;
+            display: block;
         }
 
         #start-pause-btn {
             background: #22C55E;
-            border: none;
-            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+            box-shadow: none;
+        }
+        #start-pause-btn:active {
+            transform: translateY(4px);
         }
 
         #skip-btn {
@@ -186,16 +153,113 @@
             border: 3px solid #FF6B6B;
             box-shadow: none;
         }
+        #skip-btn:active {
+            transform: translateY(4px);
+        }
+
+        /* --- Modal Overlay --- */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(4px); /* iOS nice blur effect */
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 24px;
+            border: 6px solid #FFD700;
+            padding: 30px 25px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+        }
+
+        .modal-content h2 {
+            color: #FF6B6B;
+            font-size: 1.8rem;
+            margin: 0 0 15px 0;
+            line-height: 1.2;
+        }
+
+        .modal-content p {
+            font-size: 1.1rem;
+            color: #4B5563;
+            margin: 0 0 25px 0;
+            line-height: 1.5;
+        }
+
+        .modal-buttons {
+            display: flex;
+            flex-direction: column; /* Stack vertically on mobile for easier tapping */
+            gap: 12px;
+        }
+
+        .modal-buttons button {
+            padding: 16px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 16px;
+            cursor: pointer;
+            width: 100%;
+            font-family: inherit;
+        }
+
+        .btn-keep {
+            background: #22C55E;
+            color: white;
+        }
+
+        .btn-remove {
+            background: transparent;
+            color: #FF6B6B;
+            border: 2px solid #FF6B6B !important;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* --- iPad / Desktop Tweaks --- */
+        @media (min-width: 768px) {
+            .modal-buttons {
+                flex-direction: row; /* Side by side on larger screens */
+            }
+            .task-name {
+                flex-direction: row; /* Emoji next to text on iPad */
+            }
+        }
     </style>
 </head>
 <body>
 
     <div id="current-task-card">
-        <p id="task-name" class="task-name">🎯</p>
+        <p id="task-name" class="task-name">🎯 Ready</p>
+        
         <div class="progress-shell" aria-hidden="true">
             <div id="progress-bar" class="progress-bar"></div>
         </div>
+        
         <p id="timer" class="timer-display">00:00</p>
+        
         <div class="controls">
             <button id="start-pause-btn" aria-label="Start">
                 <svg viewBox="0 0 24 24" fill="white">
@@ -212,11 +276,11 @@
 
     <div id="skip-modal" class="modal-overlay">
         <div class="modal-content">
-            <h2>Are you done with this task?</h2>
-            <p>Please confirm if you have completed this task or want to keep it for later.</p>
+            <h2>Done already?</h2>
+            <p>Did you finish the task, or do you want to save it for later?</p>
             <div class="modal-buttons">
-                <button class="btn-keep" id="keep-btn">Keep</button>
-                <button class="btn-remove" id="remove-btn">Remove</button>
+                <button class="btn-keep" id="keep-btn">Keep for later</button>
+                <button class="btn-remove" id="remove-btn">Mark complete & Remove</button>
             </div>
         </div>
     </div>
@@ -244,10 +308,13 @@
 
         function syncButtons(status) {
             const isRunning = status === 'running';
+            // Play Icon vs Pause Icon
             startPauseBtn.innerHTML = isRunning
                 ? '<svg viewBox="0 0 24 24" fill="white"><path d="M6 4h4v16H6V4zm8 0h4v16h-4V4z"/></svg>'
                 : '<svg viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>';
+            
             startPauseBtn.setAttribute('aria-label', isRunning ? 'Pause' : 'Start');
+            
             const disabled = !latest || status === 'done' || status === 'skipped';
             startPauseBtn.disabled = disabled;
             skipBtn.disabled = disabled;
@@ -264,7 +331,7 @@
 
         function renderLatest(statusOverride) {
             if (!latest || !latest.task || !latest.task.name) {
-                taskNameEl.textContent = '🎯';
+                taskNameEl.innerHTML = '<span>🎯</span> <span>Ready</span>';
                 timerEl.textContent = '00:00';
                 syncButtons('idle');
                 return;
@@ -273,7 +340,8 @@
             const status = statusOverride || latest.status || 'pending';
             const emoji = latest.task.emoji || '🎯';
 
-            taskNameEl.textContent = `${emoji} ${latest.task.name}`;
+            // Use span tags to control layout if needed
+            taskNameEl.innerHTML = `<span>${emoji}</span> <span>${latest.task.name}</span>`;
             timerEl.textContent = formatTime(remainingSeconds);
             updateProgress();
 
@@ -311,7 +379,6 @@
             renderLatest(status);
             if (status === 'done') {
                 playChime();
-                // Mark task as finished when timer completes
                 markTaskAsFinished();
                 setTimeout(goToWheel, 1400);
             }
@@ -350,7 +417,6 @@
 
         function skipTask() {
             stopTimer();
-            // Show modal to ask if user wants to keep or remove
             skipModal.classList.add('active');
         }
 
@@ -404,7 +470,6 @@
         keepBtn.addEventListener('click', handleKeepTask);
         removeBtn.addEventListener('click', handleRemoveTask);
 
-        // Close modal when clicking outside of it
         skipModal.addEventListener('click', (event) => {
             if (event.target === skipModal) {
                 skipModal.classList.remove('active');
@@ -426,7 +491,7 @@
                     return;
                 }
             } catch (e) {
-                // Fall through to direct navigation
+                // Fall through
             }
             window.location.href = 'roulette-wheel.html';
         }
