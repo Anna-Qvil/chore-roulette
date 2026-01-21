@@ -10,22 +10,21 @@
       body {
         height: 100dvh;
         width: 100vw;
-        overflow: hidden;
+        overflow: hidden; /* Prevents whole page scrolling */
         margin: 0;
         
         display: flex;
         flex-direction: column;
         align-items: center; 
         
-        /* CHANGED: Start from top instead of center */
+        /* Start from top to respect the menu button */
         justify-content: flex-start;
 
-        /* CHANGED: Add padding to top to clear the burger button 
-           (Button is ~70px from top including margin, so we use 90px) */
+        /* Padding top clears the burger button (~70px + safe area) */
         padding-top: calc(90px + env(safe-area-inset-top));
         
-        /* Extend to bottom with small padding */
-        padding-bottom: calc(20px + env(safe-area-inset-bottom));
+        /* Padding bottom creates the spacing you requested at the bottom */
+        padding-bottom: calc(40px + env(safe-area-inset-bottom));
         
         box-sizing: border-box;
       }
@@ -42,12 +41,11 @@
         display: flex;
         flex-direction: column;
         
-        /* CHANGED: Remove max-height limit so it fills the space */
-        /* max-height: 85%;  <-- REMOVED */
-        
-        /* CHANGED: Make it grow to fill the vertical space defined by body padding */
-        flex-grow: 1; 
-        
+        /* FIX: These 3 lines ensure the card stays on screen and forces inner scrolling */
+        flex: 1;          /* Grow to fill space */
+        min-height: 0;    /* CRITICAL: Allows flex container to shrink below content size */
+        overflow: hidden; /* Clips corners */
+
         padding: 15px;
         box-sizing: border-box;
       }
@@ -55,15 +53,17 @@
       h2 {
         font-size: 1.5rem;
         margin-bottom: 15px;
-        flex-shrink: 0;
+        flex-shrink: 0; /* Keeps header visible */
       }
 
       #task-list {
-        flex-grow: 1;
-        overflow-y: auto;
-        -webkit-overflow-scrolling: touch;
+        flex-grow: 1; /* Takes up all remaining space */
+        overflow-y: auto; /* Enables scrolling specifically here */
+        -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+        
         padding-right: 5px;
         padding-bottom: 20px;
+        min-height: 0; /* Safety for nested flex scrolling */
       }
 
       /* --- MOBILE CARD LAYOUT --- */
@@ -115,12 +115,11 @@
 
       /* --- DEPENDENCY DROPDOWN STYLING --- */
       .sel-dep {
-        /* Add a custom SVG arrow so it looks like a dropdown */
         background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23FF4500' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
         background-repeat: no-repeat;
         background-position: right 10px center;
         background-size: 16px;
-        padding-right: 30px; /* Make room for the arrow */
+        padding-right: 30px; 
         
         text-overflow: ellipsis;
         white-space: nowrap;
@@ -135,18 +134,17 @@
       .btn-delete {
         width: 44px;
         height: 44px;
-        background-color: transparent; /* No shading */
+        background-color: transparent; 
         border: none;
         display: flex;
         align-items: center;
         justify-content: center;
-        color: #FF4500; /* Red icon color */
+        color: #FF4500; 
         cursor: pointer;
         padding: 0;
         box-shadow: none;
       }
       
-      /* Subtle press effect */
       .btn-delete:active {
         opacity: 0.6;
         transform: scale(0.9);
@@ -161,10 +159,11 @@
 
       /* Footer */
       .footer-actions {
-        flex-shrink: 0;
+        flex-shrink: 0; /* Ensures footer never squishes or disappears */
         text-align: center;
         padding-top: 10px;
         border-top: 1px solid #eee;
+        background: white; /* Ensures content scrolling behind doesn't show through */
       }
 
       button#add-task-btn {
@@ -191,7 +190,7 @@
         #task-manager { padding: 30px; }
         
         .task-row {
-            display: flex; /* Single row */
+            display: flex; 
             background-color: transparent;
             border: none;
             box-shadow: none;
