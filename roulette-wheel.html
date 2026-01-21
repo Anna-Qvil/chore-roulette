@@ -5,6 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kids' Fun Wheel</title>
     <link rel="stylesheet" href="styles.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;700&display=swap');
+        
+        body {
+            height: 100dvh;
+            overflow: hidden;
+        }
+        
+        #wheel-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
 </head>
 <body>
 
@@ -88,13 +103,13 @@
                 let fontSize = Math.floor(canvas.width / 10);
                 if (labels[i].length > 2) {
                     fontSize = Math.floor(canvas.width / 22);
-                    ctx.font = `${fontSize}px Comic Sans MS`;
+                    ctx.font = `bold ${fontSize}px Fredoka, 'Comic Sans MS', cursive`;
                     const textWidth = ctx.measureText(labels[i]).width;
                     if (textWidth > (radius * 0.4)) {
                         fontSize = Math.floor(fontSize * ((radius * 0.4) / textWidth));
                     }
                 }
-                ctx.font = `${fontSize}px Comic Sans MS`;
+                ctx.font = `bold ${fontSize}px Fredoka, 'Comic Sans MS', cursive`;
                 ctx.textAlign = "center";
                 ctx.fillText(labels[i], 0, 0);
                 ctx.restore();

@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@400;700&display=swap');
+
 * {
     -webkit-tap-highlight-color: transparent; /* Fixes gray flash on tap */
 }
@@ -8,10 +10,10 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 100vh;
+    height: 100dvh;
     margin: 0;
     background-color: #FFF9E6; /* Soft yellow background */
-    font-family: 'Comic Sans MS', cursive, sans-serif;
+    font-family: 'Fredoka', 'Comic Sans MS', cursive, sans-serif;
     overscroll-behavior: none; /* Prevents "pull-to-refresh" bounce */
     -webkit-user-select: none; /* Prevents text selection popups */
     user-select: none;
@@ -19,9 +21,10 @@ body {
 
 #wheel-container {
     position: relative;
-    width: 500px;
-    height: 500px;
-    margin-bottom: 30px;
+    width: 90vw;   /* Matches the JS resize logic */
+    max-width: 500px;
+    height: auto;
+    aspect-ratio: 1 / 1;
 }
 
 canvas {
